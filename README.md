@@ -3,8 +3,7 @@
 <h1 align="center">
     Pandorica
 </h1>
-
-<br>
+<br/><br/>
 
 <p align="center">
     <a href="https://surrealdb.com/" target="_blank">
