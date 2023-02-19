@@ -1,0 +1,22 @@
+name: Security Audit
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: '0 0 */10 * *'
+
+jobs:
+  audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        name: Checkout
+      - uses: actions-rs/audit-check@v1
+        name: Security Audit
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}

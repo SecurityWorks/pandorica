@@ -19,6 +19,8 @@ jobs:
         name: Checkout
       - uses: arduino/setup-protoc@v1
         name: Install protoc
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions-rs/toolchain@v1
         name: Install Rust toolchain
         with:
