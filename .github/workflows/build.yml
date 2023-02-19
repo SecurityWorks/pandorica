@@ -19,6 +19,3 @@ jobs:
           override: true
       - name: Build
         run: cargo build --all --release
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          args: --all-features
