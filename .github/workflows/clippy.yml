@@ -1,0 +1,21 @@
+name: Clippy Check
+on: [push, pull_request]
+
+jobs:
+  clippycheck:
+    name: Clippy Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        name: Checkout
+      - uses: actions-rs/toolchain@v1
+        name: Install Rust toolchain
+        with:
+          toolchain: stable
+          components: clippy
+          override: true
+      - uses: actions-rs/clippy-check@v1
+        name: Run Clippy
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --all-features
