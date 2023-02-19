@@ -2,7 +2,7 @@ use crate::KEY_PROVIDER;
 use serde::{Deserialize, Serialize};
 use serde_binary::binary_stream::Endian;
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Default)]
 pub struct DEK {
     #[serde(skip)]
     pub key: Vec<u8>,
@@ -39,7 +39,7 @@ impl DEK {
         Ok(key)
     }
 
-    pub async fn decode(ciphertext: &[u8]) -> crate::shared::Result<Self> {
+    pub async fn decrypt(ciphertext: &[u8]) -> crate::shared::Result<Self> {
         let mut dek = Self::from_bytes(ciphertext);
         {
             let guard = KEY_PROVIDER.lock().await;

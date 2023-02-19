@@ -1194,37 +1194,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "knox"
-version = "0.1.0"
-dependencies = [
- "argon2",
- "async-trait",
- "chacha20poly1305",
- "chrono",
- "clokwerk",
- "gcloud-sdk",
- "lazy_static",
- "object_store",
- "once_cell",
- "prost",
- "rand_core",
- "regex",
- "scrypt",
- "secret-vault-value",
- "serde",
- "serde-binary",
- "surrealdb",
- "tokio",
- "tonic",
- "tonic-build",
- "tonic-reflection",
- "tonic-web",
- "tracing",
- "tracing-subscriber",
- "validator",
-]
-
-[[package]]
 name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1486,6 +1455,37 @@ name = "overload"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b15813163c1d831bf4a13c3610c05c0d03b39feb07f7e09fa234dac9b15aaf39"
+
+[[package]]
+name = "pandorica"
+version = "0.1.0"
+dependencies = [
+ "argon2",
+ "async-trait",
+ "chacha20poly1305",
+ "chrono",
+ "clokwerk",
+ "gcloud-sdk",
+ "lazy_static",
+ "object_store",
+ "once_cell",
+ "prost",
+ "rand_core",
+ "regex",
+ "scrypt",
+ "secret-vault-value",
+ "serde",
+ "serde-binary",
+ "surrealdb",
+ "tokio",
+ "tonic",
+ "tonic-build",
+ "tonic-reflection",
+ "tonic-web",
+ "tracing",
+ "tracing-subscriber",
+ "validator",
+]
 
 [[package]]
 name = "parking"

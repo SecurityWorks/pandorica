@@ -1,5 +1,6 @@
-use crate::models::crypto::DEK;
+use crate::models::crypto::EncryptedValue;
 use crate::models::Password;
+use crate::shared::Error;
 use crate::{knox_auth, knox_common, shared, DB};
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
@@ -14,32 +15,29 @@ pub struct User {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
     pub username: Cow<'static, str>,
-    pub email: Option<Vec<u8>>,
-    #[serde(skip_serializing)]
-    pub decoded_email: Option<Cow<'static, str>>,
+    pub email: Option<EncryptedValue>,
     #[serde(skip_serializing)]
     pub passwords: Option<Vec<Password>>,
     pub is_active: bool,
-    pub dek: Vec<u8>,
 }
 
 impl User {
-    pub fn password(&self) -> &Password {
+    pub fn get_password(&self) -> &Password {
         &self.passwords.as_ref().unwrap()[0]
     }
 
-    pub fn password_mut(&mut self) -> &mut Password {
+    pub fn get_password_mut(&mut self) -> &mut Password {
         &mut self.passwords.as_mut().unwrap()[0]
     }
 
-    pub async fn dek(&mut self) -> crate::shared::Result<DEK> {
-        if self.dek.is_empty() {
-            let dek = DEK::generate().await?;
-            self.dek = dek.clone().to_bytes();
-            return Ok(dek);
+    pub async fn set_email(&mut self, email: Option<String>) -> shared::Result<()> {
+        if email.is_none() {
+            self.email = None;
+            return Ok(());
         }
 
-        DEK::decode(&self.dek).await
+        self.email = Some(EncryptedValue::new(email.unwrap().into_bytes()).await?);
+        Ok(())
     }
 
     pub async fn validate(&self, check_duplicates: bool) -> shared::Result<()> {
@@ -47,8 +45,10 @@ impl User {
             return Err(shared::Error::new_from("invalid_username"));
         }
 
-        if let Some(e) = &self.decoded_email {
-            if !validator::validate_email(e.clone().to_string()) {
+        if let Some(e) = &self.email {
+            if e.value()
+                .exposed_in_as_zstr(|email| !validator::validate_email(email.as_str()))
+            {
                 return Err(shared::Error::new_from("invalid_email"));
             }
         }
@@ -73,27 +73,15 @@ impl User {
     }
 
     async fn validate_username(&self) -> shared::Result<()> {
-        Self::validate_field("username", &self.username)
-            .await
-            .map_err(|_| shared::Error::new_from("duplicate_username"))?;
-
-        Ok(())
-    }
-
-    async fn validate_field(field: &str, value: &str) -> shared::Result<()> {
-        let sql = format!(
-            r#"
+        let sql = r#"
             SELECT *
-            FROM type::table($table)
-            WHERE {0} = ${0}
-        "#,
-            field
-        );
+            FROM user
+            WHERE username = $username
+        "#;
 
         let result = DB
             .query(sql)
-            .bind(("table", "user"))
-            .bind((field, value))
+            .bind(("username", &self.username))
             .await
             .map(|mut r| r.take(0))
             .unwrap()
@@ -103,7 +91,7 @@ impl User {
             return Ok(());
         }
 
-        Err(shared::Error::empty())
+        Err(Error::new_from("duplicate_username"))
     }
 }
 
@@ -112,7 +100,7 @@ impl From<knox_auth::RegistrationRequest> for User {
         User {
             id: None,
             username: r.username.into(),
-            decoded_email: r.email.map(|e| e.into()),
+            email: None,
             passwords: Some(vec![Password {
                 id: None,
                 plaintext: Some(r.password.into()),
@@ -121,8 +109,6 @@ impl From<knox_auth::RegistrationRequest> for User {
                 is_active: true,
             }]),
             is_active: true,
-            email: None,
-            dek: Default::default(),
         }
     }
 }
@@ -141,8 +127,6 @@ impl From<knox_auth::LoginRequest> for User {
                 is_active: true,
             }]),
             is_active: true,
-            decoded_email: None,
-            dek: Default::default(),
         }
     }
 }
@@ -152,7 +136,7 @@ impl From<User> for knox_common::User {
         knox_common::User {
             id: value.id.unwrap(),
             username: value.username.into(),
-            email: value.decoded_email.map(|e| e.into()),
+            email: value.email.map(|e| e.value().as_sensitive_str().into()),
             is_active: value.is_active,
         }
     }

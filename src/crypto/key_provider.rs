@@ -1,5 +1,5 @@
 use crate::models::crypto::{DEK, MK};
-use crate::{CRYPTO, DB};
+use crate::{CONFIG, CRYPTO, DB};
 use secret_vault_value::SecretValue;
 use surrealdb::sql::Datetime;
 
@@ -19,33 +19,36 @@ impl KeyProvider {
     pub async fn rotate(&mut self) -> crate::shared::Result<()> {
         let result = self.load_master_key(None).await;
 
-        if result.is_ok() {
-            if self.current_master_key.expires_on > Datetime::from(chrono::Utc::now()) {
-                return Ok(());
-            }
+        match result {
+            Ok(mk) => {
+                self.current_master_key = mk;
 
-            let _ = DB
-                .query(
-                    r#"
+                if self.current_master_key.expires_on > Datetime::from(chrono::Utc::now()) {
+                    return Ok(());
+                }
+
+                let _ = DB
+                    .query(
+                        r#"
                         UPDATE master_key
                         SET is_active = false
                         WHERE id = $id
                     "#,
-                )
-                .bind(("id", self.current_master_key.id.clone().unwrap()))
-                .await?;
-        }
-
-        if let Some(e) = result.err() {
-            if e.to_string() != "master_key_not_found" {
-                return Err(e);
+                    )
+                    .bind(("id", self.current_master_key.id.clone().unwrap()))
+                    .await?;
+            }
+            Err(e) => {
+                if e.to_string() != "master_key_not_found" {
+                    return Err(e);
+                }
             }
         }
 
         let key_material = CRYPTO.cloud().generate_random_bytes(32).await?;
         let wrapped_key_material = CRYPTO
             .cloud()
-            .encrypt_envelope(&key_material, "pandorica-master".into())
+            .encrypt_envelope(&key_material, CONFIG.gcp_key_name.clone().into())
             .await?;
 
         let master_key = MK {
@@ -148,7 +151,7 @@ impl KeyProvider {
 
         let decrypted_key = CRYPTO
             .cloud()
-            .decrypt_envelope(&master_key.key, "pandorica-master".into())
+            .decrypt_envelope(&master_key.key, CONFIG.gcp_key_name.clone().into())
             .await?;
 
         master_key.decoded_key = Some(SecretValue::from(decrypted_key));

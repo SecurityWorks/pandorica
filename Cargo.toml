@@ -1,11 +1,11 @@
 [package]
-name = "knox"
+name = "pandorica"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.67"
 
 [[bin]]
-name = "knox"
+name = "pandorica"
 path = "src/main.rs"
 
 [dependencies]
