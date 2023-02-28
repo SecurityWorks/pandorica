@@ -1,11 +1,12 @@
 use crate::KEY_PROVIDER;
+use secret_vault_value::SecretValue;
 use serde::{Deserialize, Serialize};
 use serde_binary::binary_stream::Endian;
 
 #[derive(Serialize, Deserialize, Clone, Default)]
 pub struct Dek {
     #[serde(skip)]
-    pub key: Vec<u8>,
+    pub key: SecretValue,
     pub nonce: Vec<u8>,
     pub master_key_id: String,
     pub wrapping_nonce: Vec<u8>,
@@ -14,7 +15,7 @@ pub struct Dek {
 
 impl Dek {
     pub fn new(
-        key: Vec<u8>,
+        key: SecretValue,
         nonce: Vec<u8>,
         master_key_id: String,
         wrapping_nonce: Vec<u8>,

@@ -1,6 +1,5 @@
 use crate::models::crypto::{Dek, Mk};
 use crate::{CONFIG, CRYPTO, DB};
-use secret_vault_value::SecretValue;
 use surrealdb::sql::Datetime;
 
 const ENCRYPTION_KEY_SIZE: u32 = 32;
@@ -57,13 +56,13 @@ impl KeyProvider {
             expires_on: Datetime::from(chrono::Utc::now() + chrono::Duration::days(90)),
             is_active: true,
             key: wrapped_key_material,
-            decoded_key: None,
+            decoded_key: Default::default(),
         };
 
         let mut master_key: Mk = DB.create("master_key").content(&master_key).await?;
 
         master_key.key = Default::default();
-        master_key.decoded_key = Some(SecretValue::from(key_material));
+        master_key.decoded_key = key_material.into();
 
         self.current_master_key = master_key;
 
@@ -83,18 +82,17 @@ impl KeyProvider {
             .cloud()
             .generate_random_bytes(ENCRYPTION_NONCE_SIZE)
             .await?;
-        let wrapped_key_material = CRYPTO.encryption().encrypt(
-            &key,
-            self.current_master_key
-                .decoded_key
-                .clone()
-                .unwrap()
-                .as_sensitive_bytes(),
-            &wrapping_nonce,
-        )?;
+        let wrapped_key_material = self
+            .current_master_key
+            .decoded_key
+            .exposed_in_as_zstr(|k| {
+                CRYPTO
+                    .encryption()
+                    .encrypt(&key, k.as_bytes(), &wrapping_nonce)
+            })?;
 
         Ok(Dek::new(
-            key,
+            key.into(),
             nonce,
             self.current_master_key.id.clone().unwrap(),
             wrapping_nonce,
@@ -104,12 +102,11 @@ impl KeyProvider {
 
     pub async fn decrypt_dek(&self, dek: &mut Dek) -> crate::shared::Result<()> {
         let master_key = if self.current_master_key.id.clone().unwrap() == dek.master_key_id {
-            self.current_master_key.decoded_key.clone().unwrap()
+            self.current_master_key.decoded_key.clone()
         } else {
             self.load_master_key(Some(dek.master_key_id.clone()))
                 .await?
                 .decoded_key
-                .unwrap()
         };
 
         let key = CRYPTO.encryption().decrypt(
@@ -118,7 +115,7 @@ impl KeyProvider {
             &dek.wrapping_nonce,
         )?;
 
-        dek.key = key;
+        dek.key = key.into();
 
         Ok(())
     }
@@ -154,7 +151,7 @@ impl KeyProvider {
             .decrypt_envelope(&master_key.key, CONFIG.gcp_key_name().into())
             .await?;
 
-        master_key.decoded_key = Some(SecretValue::from(decrypted_key));
+        master_key.decoded_key = decrypted_key.into();
 
         Ok(master_key)
     }

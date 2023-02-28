@@ -11,5 +11,5 @@ pub struct Mk {
     pub is_active: bool,
     pub key: Vec<u8>,
     #[serde(skip)]
-    pub decoded_key: Option<SecretValue>,
+    pub decoded_key: SecretValue,
 }
