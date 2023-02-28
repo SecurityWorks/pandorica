@@ -1,3 +1,3 @@
 pub mod gcp;
 
-pub use crate::crypto::envelope::gcp::GCP;
+pub use crate::crypto::envelope::gcp::Gcp;

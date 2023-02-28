@@ -5,17 +5,16 @@ use gcloud_sdk::google::cloud::kms::v1::key_management_service_client::KeyManage
 use gcloud_sdk::google::cloud::kms::v1::{DecryptRequest, GenerateRandomBytesRequest};
 use gcloud_sdk::proto_ext::kms::EncryptRequest;
 use gcloud_sdk::{GoogleApi, GoogleAuthMiddleware};
-use prost::Message;
 use secret_vault_value::SecretValue;
 use tonic::metadata::MetadataValue;
 
-pub struct GCP {
+pub struct Gcp {
     kms_service: GoogleApi<KeyManagementServiceClient<GoogleAuthMiddleware>>,
     location: String,
     keyring: String,
 }
 
-impl GCP {
+impl Gcp {
     pub async fn new() -> crate::shared::Result<Self> {
         let kms_service = GoogleApi::from_function(
             KeyManagementServiceClient::new,
@@ -26,13 +25,14 @@ impl GCP {
 
         let location = format!(
             "projects/{}/locations/{}",
-            CONFIG.gcp_project_id, CONFIG.gcp_keyring_location
+            CONFIG.gcp_project_id(),
+            CONFIG.gcp_keyring_location()
         );
 
         let keyring = format!(
             "{}/keyRings/{}/cryptoKeys",
-            location.clone(),
-            CONFIG.gcp_keyring_name
+            location,
+            CONFIG.gcp_keyring_name()
         );
 
         Ok(Self {
@@ -44,7 +44,7 @@ impl GCP {
 }
 
 #[async_trait]
-impl CloudProvider for GCP {
+impl CloudProvider for Gcp {
     async fn encrypt_envelope(
         &self,
         plaintext: &[u8],

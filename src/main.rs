@@ -23,6 +23,7 @@ mod crypto;
 mod fs;
 mod handlers;
 mod models;
+mod repos;
 mod shared;
 
 const FILE_DESCRIPTOR_SET: &[u8] = tonic::include_file_descriptor_set!("knox_descriptor");
@@ -32,6 +33,7 @@ tonic::include_proto!("knox_proto");
 static CONFIG: Lazy<Config> = Lazy::new(Config::default);
 static DB: Surreal<Client> = Surreal::init();
 static CRYPTO: Lazy<CryptoProvider> = Lazy::new(setup_cryptoproviders);
+#[allow(dead_code)]
 static FS: Lazy<FileSystem> = Lazy::new(setup_filesystem);
 static KEY_PROVIDER: Lazy<Arc<Mutex<KeyProvider>>> =
     Lazy::new(|| Arc::new(Mutex::new(KeyProvider::default())));
@@ -53,14 +55,14 @@ async fn async_main() -> shared::Result<()> {
     // The `fmt` subscriber from the `tracing-subscriber` crate logs `tracing`
     // events to stdout.
     tracing_subscriber::fmt()
-        .with_env_filter(CONFIG.rust_log.clone())
+        .with_env_filter(CONFIG.rust_log())
         .with_span_events(FmtSpan::CLOSE)
         .init();
 
     // Setup database
-    let result = match CONFIG.db_proto.as_str() {
-        "ws" => DB.connect::<Ws>(CONFIG.db_addr.clone()).await,
-        "wss" => DB.connect::<Wss>(CONFIG.db_addr.clone()).await,
+    let result = match CONFIG.db_proto() {
+        "ws" => DB.connect::<Ws>(CONFIG.db_addr()).await,
+        "wss" => DB.connect::<Wss>(CONFIG.db_addr()).await,
         val => {
             throw_error!("Unknown database protocol: {}", val);
         }
@@ -74,8 +76,8 @@ async fn async_main() -> shared::Result<()> {
 
     let result = DB
         .signin(Root {
-            username: CONFIG.db_user.as_str(),
-            password: CONFIG.db_pass.as_str(),
+            username: CONFIG.db_user(),
+            password: CONFIG.db_pass(),
         })
         .await;
     if result.is_err() {
@@ -111,7 +113,7 @@ async fn async_main() -> shared::Result<()> {
         .register_encoded_file_descriptor_set(FILE_DESCRIPTOR_SET)
         .build()?;
 
-    let addr: SocketAddr = match CONFIG.listen_addr.parse() {
+    let addr: SocketAddr = match CONFIG.listen_addr().parse() {
         Ok(a) => a,
         Err(e) => {
             throw_error!("Failed to parse LISTEN_ADDR: {}", e.to_string());
@@ -130,10 +132,10 @@ async fn async_main() -> shared::Result<()> {
 fn setup_cryptoproviders() -> CryptoProvider {
     RUNTIME.block_on(async {
         CryptoProvider::new(
-            CONFIG.encryption_provider.clone(),
-            CONFIG.hashing_provider.clone(),
-            CONFIG.keyderivation_provider.clone(),
-            CONFIG.envelope_provider.clone(),
+            CONFIG.encryption_provider(),
+            CONFIG.hashing_provider(),
+            CONFIG.keyderivation_provider(),
+            CONFIG.envelope_provider(),
         )
         .await
         .unwrap_or_else(|e| throw_error!("Failed to initialize crypto providers: {:?}", e))
@@ -141,5 +143,5 @@ fn setup_cryptoproviders() -> CryptoProvider {
 }
 
 fn setup_filesystem() -> FileSystem {
-    FileSystem::new(CONFIG.filesystem_provider.clone())
+    FileSystem::new(CONFIG.filesystem_provider())
 }

@@ -31,10 +31,10 @@ impl Password {
     pub async fn validate(&self) -> shared::Result<()> {
         if let Some(p) = &self.plaintext {
             if p.len() < 8_usize
-                || !PASSWORD_UPPER_REGEX.is_match(&p)
-                || !PASSWORD_LOWER_REGEX.is_match(&p)
-                || !PASSWORD_DIGIT_REGEX.is_match(&p)
-                || !PASSWORD_SPECIAL_REGEX.is_match(&p)
+                || !PASSWORD_UPPER_REGEX.is_match(p)
+                || !PASSWORD_LOWER_REGEX.is_match(p)
+                || !PASSWORD_DIGIT_REGEX.is_match(p)
+                || !PASSWORD_SPECIAL_REGEX.is_match(p)
             {
                 return Err(shared::Error::new_from("invalid_password"));
             }

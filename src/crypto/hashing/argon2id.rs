@@ -8,9 +8,9 @@ pub struct Argon2id;
 
 impl HashingProvider for Argon2id {
     fn generate_hash(&self, plaintext: &[u8], salt: &[u8]) -> crate::shared::Result<Vec<u8>> {
-        let salt_string = std::str::from_utf8(&salt)?;
+        let salt_string = std::str::from_utf8(salt)?;
         let salt_internal = SaltString::new(salt_string)?;
-        let hash = Argon2::default().hash_password(plaintext.as_ref(), &salt_internal)?;
+        let hash = Argon2::default().hash_password(plaintext, &salt_internal)?;
         Ok(hash.serialize().as_bytes().into())
     }
 
@@ -21,10 +21,10 @@ impl HashingProvider for Argon2id {
     }
 
     fn verify_hash(&self, ciphertext: &[u8], hash: &[u8]) -> crate::shared::Result<bool> {
-        let password_string = std::str::from_utf8(&hash)?;
+        let password_string = std::str::from_utf8(hash)?;
         let password_hash = PasswordHash::new(password_string)?;
         Ok(Argon2::default()
-            .verify_password(&ciphertext, &password_hash)
+            .verify_password(ciphertext, &password_hash)
             .is_ok())
     }
 }

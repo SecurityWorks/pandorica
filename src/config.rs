@@ -1,24 +1,24 @@
 pub struct Config {
-    pub rust_log: String,
+    rust_log: String,
 
-    pub listen_addr: String,
+    listen_addr: String,
 
-    pub db_addr: String,
-    pub db_proto: String,
-    pub db_user: String,
-    pub db_pass: String,
+    db_addr: String,
+    db_proto: String,
+    db_user: String,
+    db_pass: String,
 
-    pub encryption_provider: String,
-    pub hashing_provider: String,
-    pub keyderivation_provider: String,
-    pub envelope_provider: String,
+    encryption_provider: String,
+    hashing_provider: String,
+    keyderivation_provider: String,
+    envelope_provider: String,
 
-    pub filesystem_provider: String,
+    filesystem_provider: String,
 
-    pub gcp_project_id: String,
-    pub gcp_keyring_location: String,
-    pub gcp_keyring_name: String,
-    pub gcp_key_name: String,
+    gcp_project_id: String,
+    gcp_keyring_location: String,
+    gcp_keyring_name: String,
+    gcp_key_name: String,
 }
 
 impl Config {
@@ -47,6 +47,66 @@ impl Config {
         }
     }
 
+    pub fn rust_log(&self) -> &str {
+        &self.rust_log
+    }
+
+    pub fn listen_addr(&self) -> &str {
+        &self.listen_addr
+    }
+
+    pub fn db_addr(&self) -> &str {
+        &self.db_addr
+    }
+
+    pub fn db_proto(&self) -> &str {
+        &self.db_proto
+    }
+
+    pub fn db_user(&self) -> &str {
+        &self.db_user
+    }
+
+    pub fn db_pass(&self) -> &str {
+        &self.db_pass
+    }
+
+    pub fn encryption_provider(&self) -> &str {
+        &self.encryption_provider
+    }
+
+    pub fn hashing_provider(&self) -> &str {
+        &self.hashing_provider
+    }
+
+    pub fn keyderivation_provider(&self) -> &str {
+        &self.keyderivation_provider
+    }
+
+    pub fn envelope_provider(&self) -> &str {
+        &self.envelope_provider
+    }
+
+    pub fn filesystem_provider(&self) -> &str {
+        &self.filesystem_provider
+    }
+
+    pub fn gcp_project_id(&self) -> &str {
+        &self.gcp_project_id
+    }
+
+    pub fn gcp_keyring_location(&self) -> &str {
+        &self.gcp_keyring_location
+    }
+
+    pub fn gcp_keyring_name(&self) -> &str {
+        &self.gcp_keyring_name
+    }
+
+    pub fn gcp_key_name(&self) -> &str {
+        &self.gcp_key_name
+    }
+
     fn env_or(key: &str, default: &str) -> String {
         std::env::var(key).unwrap_or(default.to_string())
     }
@@ -68,9 +128,5 @@ impl Config {
 
     fn env_expect_gcp(key: &str) -> String {
         Self::env_expect_if(key, || Self::env_or("ENVELOPE_PROVIDER", "gcp") == "gcp")
-    }
-
-    fn env_expect_aws(key: &str) -> String {
-        Self::env_expect_if(key, || Self::env_or("ENVELOPE_PROVIDER", "gcp") == "aws")
     }
 }

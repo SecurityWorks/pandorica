@@ -1,4 +1,4 @@
-use crate::models::crypto::DEK;
+use crate::models::crypto::Dek;
 use secret_vault_value::SecretValue;
 use serde::{Deserialize, Serialize};
 
@@ -9,12 +9,12 @@ pub struct EncryptedValue {
     #[serde(skip)]
     decoded_value: SecretValue,
     #[serde(skip)]
-    decoded_dek: DEK,
+    decoded_dek: Dek,
 }
 
 impl EncryptedValue {
     pub async fn new(value: Vec<u8>) -> crate::shared::Result<Self> {
-        let dek: DEK;
+        let dek: Dek;
         {
             let guard = crate::KEY_PROVIDER.lock().await;
             dek = guard.generate_dek().await?;
@@ -33,7 +33,7 @@ impl EncryptedValue {
     }
 
     pub async fn decrypt(&mut self) -> crate::shared::Result<()> {
-        self.decoded_dek = DEK::decrypt(&self.dek).await?;
+        self.decoded_dek = Dek::decrypt(&self.dek).await?;
 
         let decrypted_value = crate::CRYPTO.encryption().decrypt(
             &self.value,

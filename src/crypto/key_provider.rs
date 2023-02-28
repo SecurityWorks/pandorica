@@ -1,4 +1,4 @@
-use crate::models::crypto::{DEK, MK};
+use crate::models::crypto::{Dek, Mk};
 use crate::{CONFIG, CRYPTO, DB};
 use secret_vault_value::SecretValue;
 use surrealdb::sql::Datetime;
@@ -8,7 +8,7 @@ const ENCRYPTION_NONCE_SIZE: u32 = 24;
 
 #[derive(Default)]
 pub struct KeyProvider {
-    current_master_key: MK,
+    current_master_key: Mk,
 }
 
 impl KeyProvider {
@@ -48,10 +48,10 @@ impl KeyProvider {
         let key_material = CRYPTO.cloud().generate_random_bytes(32).await?;
         let wrapped_key_material = CRYPTO
             .cloud()
-            .encrypt_envelope(&key_material, CONFIG.gcp_key_name.clone().into())
+            .encrypt_envelope(&key_material, CONFIG.gcp_key_name().into())
             .await?;
 
-        let master_key = MK {
+        let master_key = Mk {
             id: None,
             added_on: Datetime::default(),
             expires_on: Datetime::from(chrono::Utc::now() + chrono::Duration::days(90)),
@@ -60,7 +60,7 @@ impl KeyProvider {
             decoded_key: None,
         };
 
-        let mut master_key: MK = DB.create("master_key").content(&master_key).await?;
+        let mut master_key: Mk = DB.create("master_key").content(&master_key).await?;
 
         master_key.key = Default::default();
         master_key.decoded_key = Some(SecretValue::from(key_material));
@@ -70,7 +70,7 @@ impl KeyProvider {
         Ok(())
     }
 
-    pub async fn generate_dek(&self) -> crate::shared::Result<DEK> {
+    pub async fn generate_dek(&self) -> crate::shared::Result<Dek> {
         let key = CRYPTO
             .cloud()
             .generate_random_bytes(ENCRYPTION_KEY_SIZE)
@@ -93,7 +93,7 @@ impl KeyProvider {
             &wrapping_nonce,
         )?;
 
-        Ok(DEK::new(
+        Ok(Dek::new(
             key,
             nonce,
             self.current_master_key.id.clone().unwrap(),
@@ -102,7 +102,7 @@ impl KeyProvider {
         ))
     }
 
-    pub async fn decrypt_dek(&self, dek: &mut DEK) -> crate::shared::Result<()> {
+    pub async fn decrypt_dek(&self, dek: &mut Dek) -> crate::shared::Result<()> {
         let master_key = if self.current_master_key.id.clone().unwrap() == dek.master_key_id {
             self.current_master_key.decoded_key.clone().unwrap()
         } else {
@@ -123,7 +123,7 @@ impl KeyProvider {
         Ok(())
     }
 
-    async fn load_master_key(&self, id: Option<String>) -> crate::shared::Result<MK> {
+    async fn load_master_key(&self, id: Option<String>) -> crate::shared::Result<Mk> {
         let query = match id {
             Some(id) => DB
                 .query(
@@ -143,7 +143,7 @@ impl KeyProvider {
             ),
         };
 
-        let master_key: Option<MK> = query.await.map(|mut r| r.take(0)).unwrap()?;
+        let master_key: Option<Mk> = query.await.map(|mut r| r.take(0)).unwrap()?;
         let mut master_key = match master_key {
             Some(m) => m,
             None => return Err(crate::shared::Error::new_from("master_key_not_found")),
@@ -151,7 +151,7 @@ impl KeyProvider {
 
         let decrypted_key = CRYPTO
             .cloud()
-            .decrypt_envelope(&master_key.key, CONFIG.gcp_key_name.clone().into())
+            .decrypt_envelope(&master_key.key, CONFIG.gcp_key_name().into())
             .await?;
 
         master_key.decoded_key = Some(SecretValue::from(decrypted_key));

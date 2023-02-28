@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use serde_binary::binary_stream::Endian;
 
 #[derive(Serialize, Deserialize, Clone, Default)]
-pub struct DEK {
+pub struct Dek {
     #[serde(skip)]
     pub key: Vec<u8>,
     pub nonce: Vec<u8>,
@@ -12,7 +12,7 @@ pub struct DEK {
     pub wrapped_key: Vec<u8>,
 }
 
-impl DEK {
+impl Dek {
     pub fn new(
         key: Vec<u8>,
         nonce: Vec<u8>,
@@ -27,16 +27,6 @@ impl DEK {
             wrapping_nonce,
             wrapped_key,
         }
-    }
-
-    pub async fn generate() -> crate::shared::Result<Self> {
-        let key: DEK;
-        {
-            let guard = KEY_PROVIDER.lock().await;
-            key = guard.generate_dek().await?;
-        }
-
-        Ok(key)
     }
 
     pub async fn decrypt(ciphertext: &[u8]) -> crate::shared::Result<Self> {

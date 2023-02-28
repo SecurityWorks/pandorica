@@ -14,11 +14,11 @@ impl EncryptionProvider for ChaCha20Poly1305 {
         key: &[u8],
         nonce: &[u8],
     ) -> crate::shared::Result<Vec<u8>> {
-        let key = Key::from_slice(&key);
-        let nonce = XNonce::from_slice(&nonce);
-        let cipher = XChaCha20Poly1305::new(&key);
+        let key = Key::from_slice(key);
+        let nonce = XNonce::from_slice(nonce);
+        let cipher = XChaCha20Poly1305::new(key);
 
-        let ciphertext = cipher.encrypt(&nonce, plaintext.as_ref())?;
+        let ciphertext = cipher.encrypt(nonce, plaintext)?;
 
         Ok(ciphertext)
     }
@@ -29,11 +29,11 @@ impl EncryptionProvider for ChaCha20Poly1305 {
         key: &[u8],
         nonce: &[u8],
     ) -> crate::shared::Result<Vec<u8>> {
-        let key = Key::from_slice(&key);
-        let nonce = XNonce::from_slice(&nonce);
-        let cipher = XChaCha20Poly1305::new(&key);
+        let key = Key::from_slice(key);
+        let nonce = XNonce::from_slice(nonce);
+        let cipher = XChaCha20Poly1305::new(key);
 
-        let plaintext = cipher.decrypt(&nonce, ciphertext.as_ref())?;
+        let plaintext = cipher.decrypt(nonce, ciphertext)?;
 
         Ok(plaintext)
     }
@@ -45,9 +45,9 @@ impl EncryptionProvider for ChaCha20Poly1305 {
         nonce: &[u8],
         dest: &mut File,
     ) -> crate::shared::Result<()> {
-        let key = Key::from_slice(&key);
-        let cipher = XChaCha20Poly1305::new(&key);
-        let mut encryptor = stream::EncryptorBE32::from_aead(cipher, nonce.as_ref().into());
+        let key = Key::from_slice(key);
+        let cipher = XChaCha20Poly1305::new(key);
+        let mut encryptor = stream::EncryptorBE32::from_aead(cipher, nonce.into());
 
         const BUFFER_LEN: usize = 10240; // 10 KiB buffer size
         let mut buffer = [0u8; BUFFER_LEN];
@@ -75,9 +75,9 @@ impl EncryptionProvider for ChaCha20Poly1305 {
         nonce: &[u8],
         dest: &mut File,
     ) -> crate::shared::Result<()> {
-        let key = Key::from_slice(&key);
-        let cipher = XChaCha20Poly1305::new(&key);
-        let mut decryptor = stream::DecryptorBE32::from_aead(cipher, nonce.as_ref().into());
+        let key = Key::from_slice(key);
+        let cipher = XChaCha20Poly1305::new(key);
+        let mut decryptor = stream::DecryptorBE32::from_aead(cipher, nonce.into());
 
         const BUFFER_LEN: usize = 10240 + 16; // 10 KiB buffer size, + 16 B for the authentication tag
         let mut buffer = [0u8; BUFFER_LEN];

@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use surrealdb::sql::Datetime;
 
 #[derive(Serialize, Deserialize, Default)]
-pub struct MK {
+pub struct Mk {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
     pub added_on: Datetime,

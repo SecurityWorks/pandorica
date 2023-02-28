@@ -1,3 +1,4 @@
+use std::fmt::{Display, Formatter};
 use tonic::Status;
 
 pub type Result<T> = core::result::Result<T, Error>;
@@ -31,9 +32,11 @@ impl Error {
             )),
         }
     }
+}
 
-    pub fn to_string(&self) -> String {
-        self.content.to_string()
+impl Display for Error {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.content)
     }
 }
 

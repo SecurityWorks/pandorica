@@ -4,14 +4,15 @@ use object_store::memory::InMemory;
 use object_store::ObjectStore;
 
 pub struct FileSystem {
+    #[allow(dead_code)]
     file_store: Box<dyn ObjectStore>,
 }
 
 impl FileSystem {
     // TODO: Add support for GCS, AWS S3, Azure Blob Storage
     // https://docs.rs/object_store/latest/object_store/
-    pub fn new(file_store: String) -> Self {
-        let file_store: Box<dyn ObjectStore> = match file_store.as_str() {
+    pub fn new(file_store: &str) -> Self {
+        let file_store: Box<dyn ObjectStore> = match file_store {
             "local" => Self::construct_local_fs(),
             "memory" => Self::construct_memory_fs(),
             _ => throw_error!("Unknown file store"),
