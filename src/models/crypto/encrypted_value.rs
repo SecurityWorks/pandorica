@@ -20,9 +20,11 @@ impl EncryptedValue {
             dek = guard.generate_dek().await?;
         }
 
-        let encrypted_value = crate::CRYPTO
-            .encryption()
-            .encrypt(&value, &dek.key, &dek.nonce)?;
+        let encrypted_value: Vec<u8> = dek.key.exposed_in_as_zstr(|k| {
+            crate::CRYPTO
+                .encryption()
+                .encrypt(&value, k.as_bytes(), &dek.nonce)
+        })?;
 
         Ok(EncryptedValue {
             value: encrypted_value,
@@ -35,11 +37,11 @@ impl EncryptedValue {
     pub async fn decrypt(&mut self) -> crate::shared::Result<()> {
         self.decoded_dek = Dek::decrypt(&self.dek).await?;
 
-        let decrypted_value = crate::CRYPTO.encryption().decrypt(
-            &self.value,
-            &self.decoded_dek.key,
-            &self.decoded_dek.nonce,
-        )?;
+        let decrypted_value = self.decoded_dek.key.exposed_in_as_zstr(|k| {
+            crate::CRYPTO
+                .encryption()
+                .decrypt(&self.value, k.as_bytes(), &self.decoded_dek.nonce)
+        })?;
 
         self.decoded_value = SecretValue::new(decrypted_value);
 

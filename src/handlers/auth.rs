@@ -1,6 +1,5 @@
 use crate::knox_auth::{auth_service_server, AuthResponse, LoginRequest, RegistrationRequest};
-use crate::shared::Error;
-use crate::{models, CRYPTO, DB};
+use crate::{models, shared, CRYPTO, DB};
 use async_trait::async_trait;
 use tonic::{Request, Response, Status};
 
@@ -19,17 +18,28 @@ impl auth_service_server::AuthService for AuthService {
         user.set_email(email).await?;
         user.validate(true).await?;
 
-        let plaintext = user.get_password().plaintext().as_bytes();
-        let hash = CRYPTO.hashing().generate_hash_ns(plaintext)?;
-        user.get_password_mut().hash = String::from_utf8(hash).map_err(Error::new)?.into();
+        let hash: String = user
+            .get_password()
+            .plaintext
+            .as_ref()
+            .unwrap()
+            .exposed_in_as_zstr(|p| {
+                let hash = CRYPTO.hashing().generate_hash_ns(p.as_bytes())?;
+                String::from_utf8(hash).map_err(shared::Error::new)
+            })?;
+        user.get_password_mut().hash = hash.into();
 
         let password: models::Password = DB
             .create("password")
             .content(&user.get_password())
             .await
-            .map_err(Error::new)?;
+            .map_err(shared::Error::new)?;
 
-        let mut user: models::User = DB.create("user").content(user).await.map_err(Error::new)?;
+        let mut user: models::User = DB
+            .create("user")
+            .content(user)
+            .await
+            .map_err(shared::Error::new)?;
         if user.email.is_some() {
             user.email.as_mut().unwrap().decrypt().await?;
         }
@@ -45,7 +55,7 @@ impl auth_service_server::AuthService for AuthService {
             .bind(("user", &user.id))
             .bind(("password", password.id))
             .await
-            .map_err(Error::new)?;
+            .map_err(shared::Error::new)?;
 
         Ok(Response::new(AuthResponse {
             user: Some(user.into()),
@@ -71,18 +81,24 @@ impl auth_service_server::AuthService for AuthService {
             .bind(("username", &user.username))
             .await
             .map(|mut r| r.take(0))
-            .map_err(Error::new)?
-            .map_err(Error::new)?;
+            .map_err(shared::Error::new)?
+            .map_err(shared::Error::new)?;
 
         if db_user.is_none() {
             return Err(Status::not_found("user_not_found"));
         }
         let mut db_user = db_user.unwrap();
 
-        let matches = CRYPTO.hashing().verify_hash(
-            user.get_password().plaintext().as_bytes(),
-            db_user.get_password().hash.as_bytes(),
-        )?;
+        let matches = user
+            .get_password()
+            .plaintext
+            .as_ref()
+            .unwrap()
+            .exposed_in_as_zstr(|p| {
+                CRYPTO
+                    .hashing()
+                    .verify_hash(p.as_bytes(), db_user.get_password().hash.as_bytes())
+            })?;
 
         if !matches {
             return Err(Status::permission_denied("invalid_password"));
