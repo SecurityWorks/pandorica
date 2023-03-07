@@ -17,15 +17,48 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         name: Checkout
+
       - uses: arduino/setup-protoc@v1
         name: Install protoc
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+
       - uses: actions-rs/toolchain@v1
         name: Install Rust toolchain
         with:
           toolchain: stable
           default: true
           override: true
-      - name: Build
-        run: cargo build --all --release
+
+      - name: Build (Windows x64)
+        if: matrix.os == 'windows-latest'
+        run: cargo build --all --release --target x86_64-pc-windows-msvc && mv target/release/pandorica.exe target/release/pandorica_windows_amd64.exe
+
+      - name: Build (Windows ARM64)
+        if: matrix.os == 'windows-latest'
+        run: cargo build --all --release --target aarch64-pc-windows-msvc && mv target/release/pandorica.exe target/release/pandorica_windows_arm64.exe
+
+      - name: Build (Linux x64)
+        if: matrix.os == 'ubuntu-latest'
+        run: cargo build --all --release --target x86_64-unknown-linux-gnu && strip target/release/pandorica && mv target/release/pandorica target/release/pandorica_linux_amd64
+
+      - name: Build (Linux ARM64)
+        if: matrix.os == 'ubuntu-latest'
+        run: cargo build --all --release --target aarch64-unknown-linux-gnu && strip target/release/pandorica && mv target/release/pandorica target/release/pandorica_linux_arm64
+
+      - name: Build (MacOS x64)
+        if: matrix.os == 'macos-latest'
+        run: cargo build --all --release --target x86_64-apple-darwin && strip target/release/pandorica && mv target/release/pandorica target/release/pandorica_macos_amd64
+
+      - name: Build (MacOS ARM64)
+        if: matrix.os == 'macos-latest'
+        run: cargo build --all --release --target aarch64-apple-darwin && strip target/release/pandorica && mv target/release/pandorica target/release/pandorica_macos_arm64
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            target/release/pandorica_*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
