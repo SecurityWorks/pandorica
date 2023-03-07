@@ -1,11 +1,10 @@
-name: Rust Build
+name: Main Build
 on:
-  pull_request:
-    branches:
-      - main
   push:
     branches:
       - main
+    tags:
+      - *
 
 env:
   CRATE_NAME: pandorica

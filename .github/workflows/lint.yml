@@ -1,0 +1,30 @@
+name: Lint
+on: [pull_request]
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        name: Checkout
+
+      - uses: arduino/setup-protoc@v1
+        name: Install protoc
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: swatinem/rust-cache@v2
+        name: Cache cargo & target directories
+
+      - uses: dtolnay/rust-toolchain@stable
+        name: Install toolchain
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+
+      - name: Run cargo check
+        run: cargo check --workspace --all-features --locked
+
+      - name: Run cargo clippy
+        run: cargo clippy -- -Dwarnings

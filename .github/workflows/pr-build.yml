@@ -1,0 +1,42 @@
+name: PR Build
+on: [pull_request]
+
+env:
+  CRATE_NAME: pandorica
+  RUST_BACKTRACE: 1
+
+jobs:
+  build:
+    name: Build linux-x86_64
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        name: Checkout
+
+      - uses: arduino/setup-protoc@v1
+        name: Install protoc
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: swatinem/rust-cache@v2
+        name: Cache cargo & target directories
+
+      - uses: houseabsolute/actions-rust-cross@v0
+        name: Build
+        with:
+          target: x86_64-unknown-linux-gnu
+          args: "--locked --release"
+          strip: true
+
+      - name: Package as archive
+        shell: bash
+        run: |
+          cd target/x86_64-unknown-linux-gnu/release
+          tar czvf ../../../pandorica-linux-x86_64.tar.gz pandorica
+          cd -
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: pandorica-linux-x86_64
+          path: pandorica-linux-x86_64.tar.gz
