@@ -6,17 +6,17 @@ use std::io::Write;
 
 #[derive(Serialize, Deserialize, Singleton)]
 #[singleton(sync = false)]
-pub struct Config {
+pub struct Settings {
     pub log_level: Cow<'static, str>,
     pub listen_addr: Cow<'static, str>,
-    pub db: DbConfig,
-    pub crypto: CryptoConfig,
-    pub fs: FsConfig,
-    pub gcp: Option<GcpConfig>,
+    pub db: DatabaseSettings,
+    pub crypto: CryptoSettings,
+    pub fs: FilesystemSettings,
+    pub gcp: Option<GoogleCloudPlatformSettings>,
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct DbConfig {
+pub struct DatabaseSettings {
     pub addr: Cow<'static, str>,
     pub proto: Cow<'static, str>,
     pub user: Cow<'static, str>,
@@ -24,25 +24,25 @@ pub struct DbConfig {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct CryptoConfig {
+pub struct CryptoSettings {
     pub hsm_provider: Cow<'static, str>,
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct FsConfig {
+pub struct FilesystemSettings {
     pub provider: Cow<'static, str>,
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct GcpConfig {
+pub struct GoogleCloudPlatformSettings {
     pub project_id: Cow<'static, str>,
     pub location: Cow<'static, str>,
     pub key_ring: Cow<'static, str>,
     pub key: Cow<'static, str>,
 }
 
-impl SingletonInit<Config> for Config {
-    fn init() -> Config {
+impl SingletonInit<Settings> for Settings {
+    fn init() -> Settings {
         let config_file = OpenOptions::new().read(true).open(
             std::env::current_dir()
                 .unwrap()
@@ -51,7 +51,7 @@ impl SingletonInit<Config> for Config {
         );
         if config_file.is_err() {
             eprintln!("{:?}", config_file.err().unwrap());
-            let default_config = Config::default();
+            let default_config = Settings::default();
             let mut config_file = OpenOptions::new()
                 .create(true)
                 .write(true)
@@ -79,21 +79,21 @@ impl SingletonInit<Config> for Config {
     }
 }
 
-impl Default for Config {
+impl Default for Settings {
     fn default() -> Self {
         Self {
             log_level: "info".into(),
             listen_addr: "127.0.0.1:5000".into(),
-            db: DbConfig {
+            db: DatabaseSettings {
                 addr: "127.0.0.1:8000".into(),
                 proto: "ws".into(),
                 user: "root".into(),
                 pass: "root".into(),
             },
-            crypto: CryptoConfig {
+            crypto: CryptoSettings {
                 hsm_provider: "gcp".into(),
             },
-            fs: FsConfig {
+            fs: FilesystemSettings {
                 provider: "memory".into(),
             },
             gcp: None,

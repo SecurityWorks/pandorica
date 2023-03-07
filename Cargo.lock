@@ -1666,6 +1666,7 @@ dependencies = [
  "async-trait",
  "chrono",
  "clokwerk",
+ "config",
  "crypto",
  "foreign",
  "identifier",
@@ -1680,6 +1681,7 @@ dependencies = [
  "singleton",
  "surrealdb",
  "tokio",
+ "toml 0.7.2",
  "tonic",
  "tonic-build",
  "tonic-reflection",
@@ -2469,10 +2471,7 @@ name = "shared"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "config",
- "serde",
  "singleton",
- "toml 0.7.2",
  "tonic",
 ]
 

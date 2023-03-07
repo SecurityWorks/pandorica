@@ -38,7 +38,7 @@ pub trait EncryptionProvider: Send + Sync {
 
 #[async_trait]
 pub trait CloudProvider: Send + Sync {
-    async fn init(&mut self) -> EmptyResult;
+    async fn init(&mut self, project_id: &str, location: &str, key_ring: &str) -> EmptyResult;
     async fn encrypt_envelope(&self, plaintext: SecretValue, key: &str)
         -> OperationResult<Vec<u8>>;
     async fn decrypt_envelope(&self, ciphertext: &[u8], key: &str) -> OperationResult<SecretValue>;

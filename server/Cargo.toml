@@ -29,6 +29,8 @@ anyhow = "^1.0.69"
 once_cell = "^1.17.1"
 async-trait = "^0.1.66"
 secret-vault-value = "^0.3.7"
+config = "^0.13.3"
+toml = "^0.7.2"
 singleton = { version = "^0.1.0", path = "../lib/singleton" }
 shared = { version = "^0.1.0", path = "../lib/shared" }
 identifier = { version = "^0.1.0", path = "../lib/identifier" }

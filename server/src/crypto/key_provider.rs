@@ -1,8 +1,8 @@
+use crate::config::Settings;
 use chrono::Utc;
 use crypto::encryption::chacha20poly1305::ChaCha20Poly1305;
 use crypto::traits::{CloudProvider, EncryptionProvider};
 use secret_vault_value::SecretValue;
-use shared::config::Config;
 use shared::error::{EmptyResult, OperationResult};
 use singleton::{unsync::Singleton as UnsyncSingleton, OnceCell, Singleton, SingletonInit};
 use std::borrow::Cow;
@@ -22,12 +22,20 @@ pub struct KeyProvider {
 
 impl KeyProvider {
     pub async fn init_cloud(&mut self) -> EmptyResult {
-        if Config::get().crypto.hsm_provider == "gcp" {
+        if Settings::get().crypto.hsm_provider == "gcp" {
             self.hsm =
                 OnceCell::from(Box::<crypto::hsm::gcp::Gcp>::default() as Box<dyn CloudProvider>);
         }
 
-        self.hsm.get_mut().unwrap().init().await?;
+        self.hsm
+            .get_mut()
+            .unwrap()
+            .init(
+                &Settings::get().gcp.as_ref().unwrap().project_id,
+                &Settings::get().gcp.as_ref().unwrap().location,
+                &Settings::get().gcp.as_ref().unwrap().key_ring,
+            )
+            .await?;
         self.rotate().await
     }
 
@@ -59,7 +67,7 @@ impl KeyProvider {
             .unwrap()
             .encrypt_envelope(
                 key_material.clone(),
-                Config::get().gcp.as_ref().unwrap().key.as_ref(),
+                Settings::get().gcp.as_ref().unwrap().key.as_ref(),
             )
             .await?;
 
@@ -148,7 +156,7 @@ impl KeyProvider {
             .unwrap()
             .decrypt_envelope(
                 &master_key.key,
-                Config::get().gcp.as_ref().unwrap().key.as_ref(),
+                Settings::get().gcp.as_ref().unwrap().key.as_ref(),
             )
             .await?;
 

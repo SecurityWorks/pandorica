@@ -1,6 +1,6 @@
 #![forbid(unsafe_code)]
 
-use ::shared::config::Config;
+use crate::config::Settings;
 use ::shared::error::EmptyResult;
 use singleton::{sync::Singleton, unsync::Singleton as UnsyncSingleton};
 use std::net::SocketAddr;
@@ -14,6 +14,7 @@ use crate::crypto::KeyProvider;
 use crate::handlers::auth::AuthService;
 use crate::knox_auth::auth_service_server::AuthServiceServer;
 
+mod config;
 mod crypto;
 mod fs;
 mod handlers;
@@ -30,17 +31,17 @@ static DB: Surreal<Client> = Surreal::init();
 #[tokio::main]
 async fn main() -> EmptyResult {
     tracing_subscriber::fmt()
-        .with_env_filter(format!("pandorica={}", Config::get().log_level))
+        .with_env_filter(format!("pandorica={}", Settings::get().log_level))
         .with_span_events(FmtSpan::CLOSE)
         .init();
 
-    let result = match Config::get().db.proto.as_ref() {
+    let result = match Settings::get().db.proto.as_ref() {
         "ws" => {
-            DB.connect::<Ws>(Config::get().db.addr.clone().into_owned())
+            DB.connect::<Ws>(Settings::get().db.addr.clone().into_owned())
                 .await
         }
         "wss" => {
-            DB.connect::<Wss>(Config::get().db.addr.clone().into_owned())
+            DB.connect::<Wss>(Settings::get().db.addr.clone().into_owned())
                 .await
         }
         val => {
@@ -56,8 +57,8 @@ async fn main() -> EmptyResult {
 
     let result = DB
         .signin(Root {
-            username: &Config::get().db.user,
-            password: &Config::get().db.pass,
+            username: &Settings::get().db.user,
+            password: &Settings::get().db.pass,
         })
         .await;
     if result.is_err() {
@@ -93,7 +94,7 @@ async fn main() -> EmptyResult {
         .register_encoded_file_descriptor_set(FILE_DESCRIPTOR_SET)
         .build()?;
 
-    let addr: SocketAddr = match Config::get().listen_addr.parse() {
+    let addr: SocketAddr = match Settings::get().listen_addr.parse() {
         Ok(a) => a,
         Err(e) => {
             panic!("Failed to parse LISTEN_ADDR: {}", e);

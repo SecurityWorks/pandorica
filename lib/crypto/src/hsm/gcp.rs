@@ -3,9 +3,8 @@ use gcloud_sdk::google::cloud::kms::v1::{DecryptRequest, GenerateRandomBytesRequ
 use gcloud_sdk::proto_ext::kms::EncryptRequest;
 use gcloud_sdk::{GoogleApi, GoogleAuthMiddleware};
 use secret_vault_value::SecretValue;
-use shared::config::Config;
 use shared::error::{EmptyResult, OperationResult};
-use singleton::{async_trait, unsync::Singleton, OnceCell};
+use singleton::{async_trait, OnceCell};
 use tonic::metadata::MetadataValue;
 
 use crate::traits::CloudProvider;
@@ -19,7 +18,7 @@ pub struct Gcp {
 
 #[async_trait]
 impl CloudProvider for Gcp {
-    async fn init(&mut self) -> EmptyResult {
+    async fn init(&mut self, project_id: &str, location: &str, key_ring: &str) -> EmptyResult {
         self.kms_service = OnceCell::from(
             GoogleApi::from_function(
                 KeyManagementServiceClient::new,
@@ -29,17 +28,9 @@ impl CloudProvider for Gcp {
             .await?,
         );
 
-        self.location = format!(
-            "projects/{}/locations/{}",
-            Config::get().gcp.as_ref().unwrap().project_id,
-            Config::get().gcp.as_ref().unwrap().location
-        );
+        self.location = format!("projects/{}/locations/{}", project_id, location);
 
-        self.keyring = format!(
-            "{}/keyRings/{}/cryptoKeys",
-            self.location,
-            Config::get().gcp.as_ref().unwrap().key_ring
-        );
+        self.keyring = format!("{}/keyRings/{}/cryptoKeys", self.location, key_ring);
 
         Ok(())
     }

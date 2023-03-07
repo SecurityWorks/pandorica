@@ -4,9 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-serde = { version="^1.0.152", features=["derive"] }
-config = "^0.13.3"
 anyhow = "^1.0.69"
 tonic = "^0.8.3"
 singleton = { version="^0.1.0", path="../singleton" }
-toml = "^0.7.2"
