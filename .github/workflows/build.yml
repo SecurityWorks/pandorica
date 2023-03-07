@@ -31,6 +31,9 @@ jobs:
           default: true
           override: true
 
+      - name: Install target ${{ matrix.arch }}
+        run: rustup target add ${{ matrix.arch }}-unknown-linux-gnu ${{ matrix.arch }}-apple-darwin ${{ matrix.arch }}-pc-windows-msvc
+
       - name: Build (Windows ${{ matrix.arch }})
         if: matrix.os == 'windows-latest'
         run: cargo build --all --release --target ${{ matrix.arch }}-pc-windows-msvc && mv target/release/pandorica.exe target/release/pandorica_windows_${{ matrix.arch }}.exe
