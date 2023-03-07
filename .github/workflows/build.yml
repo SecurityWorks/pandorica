@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    name: Build ${{ matrix.target }}
+    name: Build ${{ matrix.arch }} ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
@@ -37,14 +37,26 @@ jobs:
       - name: Build (Windows ${{ matrix.arch }})
         if: matrix.os == 'windows-latest'
         run: cargo build --all --release --target ${{ matrix.arch }}-pc-windows-msvc && mv target/release/pandorica.exe target/release/pandorica_windows_${{ matrix.arch }}.exe
+        env:
+          TARGET: ${{ matrix.arch }}-pc-windows-msvc
+          TARGET_CC: ${{ matrix.arch }}-pc-windows-msvc-gcc
+          TARGET_AR: ${{ matrix.arch }}-pc-windows-msvc-ar
 
       - name: Build (Linux ${{ matrix.arch }})
         if: matrix.os == 'ubuntu-latest'
         run: cargo build --all --release --target ${{ matrix.arch }}-unknown-linux-gnu && strip target/release/pandorica && mv target/release/pandorica target/release/pandorica_linux_${{ matrix.arch }}
+        env:
+          TARGET: ${{ matrix.arch }}-unknown-linux-gnu
+          TARGET_CC: ${{ matrix.arch }}-unknown-linux-gnu-gcc
+          TARGET_AR: ${{ matrix.arch }}-unknown-linux-gnu-ar
 
       - name: Build (MacOS ${{ matrix.arch }})
         if: matrix.os == 'macos-latest'
         run: cargo build --all --release --target ${{ matrix.arch }}-apple-darwin && strip target/release/pandorica && mv target/release/pandorica target/release/pandorica_macos_${{ matrix.arch }}
+        env:
+          TARGET: ${{ matrix.arch }}-apple-darwin
+          TARGET_CC: ${{ matrix.arch }}-apple-darwin-gcc
+          TARGET_AR: ${{ matrix.arch }}-apple-darwin-ar
 
       - name: Release
         uses: softprops/action-gh-release@v1
