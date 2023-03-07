@@ -8,7 +8,7 @@ use shared::error::{EmptyResult, OperationResult};
 use singleton::{async_trait, unsync::Singleton, OnceCell};
 use tonic::metadata::MetadataValue;
 
-use crate::crypto::traits::CloudProvider;
+use crate::traits::CloudProvider;
 
 #[derive(Default)]
 pub struct Gcp {

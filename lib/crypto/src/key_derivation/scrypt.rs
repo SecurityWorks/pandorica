@@ -2,7 +2,7 @@ use scrypt::Params;
 use secret_vault_value::SecretValue;
 use shared::error::OperationResult;
 
-use crate::crypto::traits::KeyDerivationProvider;
+use crate::traits::KeyDerivationProvider;
 
 #[derive(Clone)]
 pub struct Scrypt;

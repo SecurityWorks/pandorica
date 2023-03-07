@@ -1,8 +1,8 @@
 use std::fs::File;
 
+use async_trait::async_trait;
 use secret_vault_value::SecretValue;
 use shared::error::{EmptyResult, OperationResult};
-use singleton::async_trait;
 
 pub trait KeyDerivationProvider: Send + Sync {
     fn derive_key(input: &SecretValue, salt: &[u8]) -> OperationResult<SecretValue>;

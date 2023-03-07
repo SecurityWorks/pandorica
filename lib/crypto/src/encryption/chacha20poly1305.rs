@@ -6,7 +6,7 @@ use chacha20poly1305::{Key, KeyInit, XChaCha20Poly1305, XNonce};
 use secret_vault_value::SecretValue;
 use shared::error::OperationResult;
 
-use crate::crypto::traits::EncryptionProvider;
+use crate::traits::EncryptionProvider;
 
 #[derive(Clone)]
 pub struct ChaCha20Poly1305;

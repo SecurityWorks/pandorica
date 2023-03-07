@@ -553,6 +553,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "crypto"
+version = "0.1.0"
+dependencies = [
+ "argon2",
+ "async-trait",
+ "chacha20poly1305",
+ "gcloud-sdk",
+ "once_cell",
+ "rand_core",
+ "scrypt",
+ "secret-vault-value",
+ "shared",
+ "singleton",
+ "tonic",
+]
+
+[[package]]
 name = "crypto-common"
 version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1646,19 +1663,16 @@ name = "pandorica"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "argon2",
- "chacha20poly1305",
+ "async-trait",
  "chrono",
  "clokwerk",
+ "crypto",
  "foreign",
- "gcloud-sdk",
  "identifier",
  "object_store",
  "once_cell",
  "prost",
- "rand_core",
  "regex",
- "scrypt",
  "secret-vault-value",
  "serde",
  "serde-binary",

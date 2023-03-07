@@ -1,12 +1,13 @@
 use std::borrow::Cow;
 
+use crypto::encryption::ChaCha20Poly1305;
+use crypto::traits::EncryptionProvider;
 use secret_vault_value::SecretValue;
 use serde::{Deserialize, Serialize};
 use shared::error::{EmptyResult, OperationResult};
 use singleton::sync::Singleton;
 
-use crate::crypto::encryption::ChaCha20Poly1305;
-use crate::crypto::{traits::EncryptionProvider, KeyProvider};
+use crate::crypto::KeyProvider;
 use crate::models::crypto::Dek;
 
 #[derive(Serialize, Deserialize, Clone)]

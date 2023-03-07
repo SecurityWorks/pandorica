@@ -1,8 +1,8 @@
 use std::borrow::Cow;
 
-use crate::crypto::hashing::Argon2id;
-use crate::crypto::traits::HashingProvider;
 use chrono::{DateTime, Utc};
+use crypto::hashing::Argon2id;
+use crypto::traits::HashingProvider;
 use foreign::IntoKey;
 use identifier::Identifier;
 use secret_vault_value::SecretValue;

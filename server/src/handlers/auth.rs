@@ -1,5 +1,5 @@
+use async_trait::async_trait;
 use shared::error::EmptyResult;
-use singleton::async_trait;
 use tonic::{Request, Response, Status};
 
 use crate::knox_auth::{auth_service_server, AuthResponse, LoginRequest, RegistrationRequest};

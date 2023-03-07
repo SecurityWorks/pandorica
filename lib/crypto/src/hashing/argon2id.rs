@@ -4,7 +4,7 @@ use rand_core::OsRng;
 use secret_vault_value::SecretValue;
 use shared::error::OperationResult;
 
-use crate::crypto::traits::HashingProvider;
+use crate::traits::HashingProvider;
 
 #[derive(Clone)]
 pub struct Argon2id;
