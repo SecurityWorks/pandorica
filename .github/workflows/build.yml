@@ -20,38 +20,38 @@ jobs:
           - release_for: linux-x86_64
             os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            bin: ${{ env.CRATE_NAME }}
-            name: ${{ env.CRATE_NAME }}-linux-x86_64.tar.gz
+            bin: pandorica
+            name: pandorica-linux-x86_64.tar.gz
 
           - release_for: linux-aarch64
             os: ubuntu-latest
             target: aarch64-unknown-linux-gnu
-            bin: ${{ env.CRATE_NAME }}
-            name: ${{ env.CRATE_NAME }}-linux-aarch64.tar.gz
+            bin: pandorica
+            name: pandorica-linux-aarch64.tar.gz
 
           - release_for: windows-x86_64
             os: windows-latest
             target: x86_64-pc-windows-msvc
-            bin: ${{ env.CRATE_NAME }}.exe
-            name: ${{ env.CRATE_NAME }}-windows-x86_64.zip
+            bin: pandorica.exe
+            name: pandorica-windows-x86_64.zip
 
           - release_for: windows-aarch64
             os: windows-latest
             target: aarch64-pc-windows-msvc
-            bin: ${{ env.CRATE_NAME }}.exe
-            name: ${{ env.CRATE_NAME }}-windows-aarch64.zip
+            bin: pandorica.exe
+            name: pandorica-windows-aarch64.zip
 
           - release_for: macos-x86_64
             os: macos-latest
             target: x86_64-apple-darwin
-            bin: ${{ env.CRATE_NAME }}
-            name: ${{ env.CRATE_NAME }}-macos-x86_64.tar.gz
+            bin: pandorica
+            name: pandorica-macos-x86_64.tar.gz
 
           - release_for: macos-aarch64
             os: macos-latest
             target: aarch64-apple-darwin
-            bin: ${{ env.CRATE_NAME }}
-            name: ${{ env.CRATE_NAME }}-macos-aarch64.tar.gz
+            bin: pandorica
+            name: pandorica-macos-aarch64.tar.gz
 
     runs-on: ${{ matrix.platform.os }}
     steps:
@@ -88,7 +88,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ env.CRATE_NAME }}-${{ matrix.platform.release_for }}
+          name: pandorica-${{ matrix.platform.release_for }}
           path: ${{ matrix.platform.name }}
 
       - name: Release
@@ -96,7 +96,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           draft: true
-          files: "${{ env.CRATE_NAME }}-*"
+          files: "pandorica-*"
           body_path: CHANGELOG.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
