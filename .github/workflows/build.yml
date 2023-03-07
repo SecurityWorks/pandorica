@@ -7,14 +7,53 @@ on:
     branches:
       - main
 
+env:
+  CRATE_NAME: pandorica
+  RUST_BACKTRACE: 1
+
 jobs:
   build:
-    name: Build ${{ matrix.arch }} ${{ matrix.os }}
+    name: Build ${{ matrix.platform.release_for }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        arch: [x86_64, aarch64]
-    runs-on: ${{ matrix.os }}
+        platform:
+          - release_for: linux-x86_64
+            os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            bin: ${{ env.CRATE_NAME }}
+            name: ${{ env.CRATE_NAME }}-linux-x86_64.tar.gz
+
+          - release_for: linux-aarch64
+            os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            bin: ${{ env.CRATE_NAME }}
+            name: ${{ env.CRATE_NAME }}-linux-aarch64.tar.gz
+
+          - release_for: windows-x86_64
+            os: windows-latest
+            target: x86_64-pc-windows-msvc
+            bin: ${{ env.CRATE_NAME }}.exe
+            name: ${{ env.CRATE_NAME }}-windows-x86_64.zip
+
+          - release_for: windows-aarch64
+            os: windows-latest
+            target: aarch64-pc-windows-msvc
+            bin: ${{ env.CRATE_NAME }}.exe
+            name: ${{ env.CRATE_NAME }}-windows-aarch64.zip
+
+          - release_for: macos-x86_64
+            os: macos-latest
+            target: x86_64-apple-darwin
+            bin: ${{ env.CRATE_NAME }}
+            name: ${{ env.CRATE_NAME }}-macos-x86_64.tar.gz
+
+          - release_for: macos-aarch64
+            os: macos-latest
+            target: aarch64-apple-darwin
+            bin: ${{ env.CRATE_NAME }}
+            name: ${{ env.CRATE_NAME }}-macos-aarch64.tar.gz
+
+    runs-on: ${{ matrix.platform.os }}
     steps:
       - uses: actions/checkout@v3
         name: Checkout
@@ -24,45 +63,40 @@ jobs:
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: actions-rs/toolchain@v1
-        name: Install Rust toolchain
+      - uses: houseabsolute/actions-rust-cross@v0
+        name: Build
         with:
-          toolchain: stable
-          default: true
-          override: true
+          target: ${{ matrix.platform.target }}
+          args: "--locked --release"
+          strip: true
 
-      - name: Install target ${{ matrix.arch }}
-        run: rustup target add ${{ matrix.arch }}-unknown-linux-gnu ${{ matrix.arch }}-apple-darwin ${{ matrix.arch }}-pc-windows-msvc
+      - name: Package as archive
+        shell: bash
+        run: |
+          cd target/${{ matrix.platform.target }}/release
+          if [[ "${{ matrix.platform.os }}" == "windows-latest" ]]; then
+            7z a ../../../${{ matrix.platform.name }} ${{ matrix.platform.bin }}
+          else
+            tar czvf ../../../${{ matrix.platform.name }} ${{ matrix.platform.bin }}
+          fi
+          cd -
 
-      - name: Build (Windows ${{ matrix.arch }})
-        if: matrix.os == 'windows-latest'
-        run: cargo build --all --release --target ${{ matrix.arch }}-pc-windows-msvc && mv target/release/pandorica.exe target/release/pandorica_windows_${{ matrix.arch }}.exe
-        env:
-          TARGET: ${{ matrix.arch }}-pc-windows-msvc
-          TARGET_CC: ${{ matrix.arch }}-pc-windows-msvc-gcc
-          TARGET_AR: ${{ matrix.arch }}-pc-windows-msvc-ar
+      - name: Generate SHA-258
+        if: matrix.platform.os == 'macos-latest'
+        run: shasum -a 256 ${{ matrix.platform.name }}
 
-      - name: Build (Linux ${{ matrix.arch }})
-        if: matrix.os == 'ubuntu-latest'
-        run: cargo build --all --release --target ${{ matrix.arch }}-unknown-linux-gnu && strip target/release/pandorica && mv target/release/pandorica target/release/pandorica_linux_${{ matrix.arch }}
-        env:
-          TARGET: ${{ matrix.arch }}-unknown-linux-gnu
-          TARGET_CC: ${{ matrix.arch }}-unknown-linux-gnu-gcc
-          TARGET_AR: ${{ matrix.arch }}-unknown-linux-gnu-ar
-
-      - name: Build (MacOS ${{ matrix.arch }})
-        if: matrix.os == 'macos-latest'
-        run: cargo build --all --release --target ${{ matrix.arch }}-apple-darwin && strip target/release/pandorica && mv target/release/pandorica target/release/pandorica_macos_${{ matrix.arch }}
-        env:
-          TARGET: ${{ matrix.arch }}-apple-darwin
-          TARGET_CC: ${{ matrix.arch }}-apple-darwin-gcc
-          TARGET_AR: ${{ matrix.arch }}-apple-darwin-ar
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.CRATE_NAME }}-${{ matrix.platform.release_for }}
+          path: ${{ matrix.platform.name }}
 
       - name: Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: |
-            target/release/pandorica_*
+          draft: true
+          files: "${{ env.CRATE_NAME }}-*"
+          body_path: CHANGELOG.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
