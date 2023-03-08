@@ -1,9 +1,0 @@
-[package]
-name = "shared"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-anyhow = "^1.0.69"
-tonic = "^0.8.3"
-singleton = { version="^0.1.0", path="../singleton" }
