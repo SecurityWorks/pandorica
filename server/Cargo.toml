@@ -10,7 +10,6 @@ path = "src/main.rs"
 
 [dependencies]
 tokio = { version="^1.25.0", features=["rt-multi-thread", "macros"] }
-prost = "^0.11.6"
 tonic = "^0.8.3"
 tonic-reflection = "^0.6.0"
 tonic-web = "^0.5.0"
@@ -35,6 +34,4 @@ singleton = { version = "^0.1.0", path = "../lib/singleton" }
 shared = { version = "^0.1.0", path = "../lib/shared" }
 identifier = { version = "^0.1.0", path = "../lib/identifier" }
 crypto = { version = "^0.1.0", path = "../lib/crypto" }
-
-[build-dependencies]
-tonic-build = { version="^0.8.4", features=["prost"] }
+protobuf = { version = "^0.1.0", path = "../lib/protobuf" }

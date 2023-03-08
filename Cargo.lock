@@ -1672,7 +1672,7 @@ dependencies = [
  "identifier",
  "object_store",
  "once_cell",
- "prost",
+ "protobuf",
  "regex",
  "secret-vault-value",
  "serde",
@@ -1683,7 +1683,6 @@ dependencies = [
  "tokio",
  "toml 0.7.2",
  "tonic",
- "tonic-build",
  "tonic-reflection",
  "tonic-web",
  "tracing",
@@ -1974,6 +1973,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "379119666929a1afd7a043aa6cf96fa67a6dce9af60c88095a4686dbce4c9c88"
 dependencies = [
  "prost",
+]
+
+[[package]]
+name = "protobuf"
+version = "0.1.0"
+dependencies = [
+ "prost",
+ "tonic",
+ "tonic-build",
 ]
 
 [[package]]

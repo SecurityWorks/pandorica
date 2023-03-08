@@ -3,6 +3,7 @@ members = [
     "lib/crypto",
     "lib/foreign",
     "lib/identifier",
+    "lib/protobuf",
     "lib/shared",
     "lib/singleton",
     "lib/singleton-derive",

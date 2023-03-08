@@ -2,6 +2,8 @@
 
 use crate::config::Settings;
 use ::shared::error::EmptyResult;
+use protobuf::pandorica_auth::auth_service_server::AuthServiceServer;
+use protobuf::FILE_DESCRIPTOR_SET;
 use singleton::{sync::Singleton, unsync::Singleton as UnsyncSingleton};
 use std::net::SocketAddr;
 use surrealdb::engine::remote::ws::{Client, Ws, Wss};
@@ -12,7 +14,6 @@ use tracing_subscriber::fmt::format::FmtSpan;
 
 use crate::crypto::KeyProvider;
 use crate::handlers::auth::AuthService;
-use crate::knox_auth::auth_service_server::AuthServiceServer;
 
 mod config;
 mod crypto;
@@ -21,10 +22,6 @@ mod handlers;
 mod models;
 mod repos;
 mod validators;
-
-const FILE_DESCRIPTOR_SET: &[u8] = tonic::include_file_descriptor_set!("knox_descriptor");
-
-tonic::include_proto!("knox_proto");
 
 static DB: Surreal<Client> = Surreal::init();
 

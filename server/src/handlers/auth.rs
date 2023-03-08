@@ -2,9 +2,11 @@ use async_trait::async_trait;
 use shared::error::EmptyResult;
 use tonic::{Request, Response, Status};
 
-use crate::knox_auth::{auth_service_server, AuthResponse, LoginRequest, RegistrationRequest};
 use crate::models::auth::User;
 use crate::{repos, validators};
+use protobuf::pandorica_auth::{
+    auth_service_server, AuthResponse, LoginRequest, RegistrationRequest,
+};
 
 #[derive(Default)]
 pub struct AuthService {}

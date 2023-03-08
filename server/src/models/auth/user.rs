@@ -2,12 +2,12 @@ use std::borrow::Cow;
 
 use foreign::Foreign;
 use identifier::Identifier;
+use protobuf::pandorica_auth::{LoginRequest, RegistrationRequest};
+use protobuf::pandorica_common;
 use secret_vault_value::SecretValue;
 use serde::{Deserialize, Serialize};
 use shared::error::OperationResult;
 
-use crate::knox_auth::{LoginRequest, RegistrationRequest};
-use crate::knox_common;
 use crate::models::auth::Password;
 use crate::models::crypto::EncryptedValue;
 
@@ -62,9 +62,9 @@ impl<'a> User<'a> {
     }
 }
 
-impl From<User<'_>> for knox_common::User {
+impl From<User<'_>> for pandorica_common::User {
     fn from(value: User) -> Self {
-        knox_common::User {
+        pandorica_common::User {
             id: value.get_id().as_string(),
             username: value.username.into(),
             email: value
