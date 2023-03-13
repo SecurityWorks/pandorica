@@ -14,6 +14,7 @@ jobs:
   build:
     name: Build ${{ matrix.platform.release_for }}
     strategy:
+      fail-fast: false
       matrix:
         platform:
           - release_for: linux-x86_64
@@ -33,6 +34,12 @@ jobs:
             target: x86_64-pc-windows-msvc
             bin: pandorica.exe
             name: pandorica-windows-x86_64.zip
+
+          - release_for: windows-aarch64
+            os: windows-latest
+            target: aarch64-pc-windows-msvc
+            bin: pandorica.exe
+            name: pandorica-windows-aarch64.zip
 
           - release_for: macos-x86_64
             os: macos-latest
