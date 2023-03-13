@@ -39,12 +39,14 @@ pub async fn update(user: &User<'_>) -> EmptyResult {
     UPDATE user
     SET passwords = $passwords,
         sessions = $sessions,
+        last_seen_on = $last_seen_on,
         is_active = $is_active
     WHERE id = $id
     "#,
     )
     .bind(("passwords", &user.passwords))
     .bind(("sessions", &user.sessions))
+    .bind(("last_seen_on", user.last_seen_on))
     .bind(("is_active", user.is_active))
     .bind(("id", user.get_id().full_identifier()))
     .await?;

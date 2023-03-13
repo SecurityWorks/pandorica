@@ -46,9 +46,9 @@ impl From<Session<'_>> for pandorica_common::Session {
         pandorica_common::Session {
             id: value.get_id().as_string(),
             user_id: Some(value.user_id.into()),
-            added_on: value.added_on.timestamp_millis(),
-            last_used_on: value.last_used_on.timestamp_millis(),
-            expires_on: value.expires_on.timestamp_millis(),
+            added_on: value.added_on.timestamp_micros(),
+            last_used_on: value.last_used_on.timestamp_micros(),
+            expires_on: value.expires_on.timestamp_micros(),
         }
     }
 }

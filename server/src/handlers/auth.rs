@@ -4,6 +4,7 @@ use shared::error::EmptyResult;
 use std::borrow::Cow;
 use tonic::{Request, Response, Status};
 
+use crate::helpers::authorization::get_session;
 use crate::models::auth::{Password, Session, User};
 use crate::{repos, validators};
 use protobuf::pandorica_auth::{
@@ -98,5 +99,20 @@ impl auth_service_server::AuthService for AuthService {
             user: Some(user.into()),
             session: Some(session.into()),
         }))
+    }
+
+    async fn logout(
+        &self,
+        request: Request<protobuf::pandorica_auth::LogoutRequest>,
+    ) -> Result<Response<protobuf::pandorica_auth::LogoutResponse>, Status> {
+        let metadata = request.metadata();
+        let mut session = get_session(metadata).await?;
+
+        if session.verify() {
+            session.expires_on = Utc::now();
+            repos::session::update(&session).await?;
+        }
+
+        Ok(Response::new(protobuf::pandorica_auth::LogoutResponse {}))
     }
 }

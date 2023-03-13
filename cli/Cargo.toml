@@ -1,0 +1,20 @@
+[package]
+name = "pandorica-cli"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "pandorica-cli"
+path = "src/main.rs"
+
+[dependencies]
+chrono = "^0.4.24"
+clap = { version = "4.1.8", features = ["derive"] }
+once_cell = "^1.17.1"
+owo-colors = { version = "^3.5.0", features = ["supports-colors"] }
+protobuf = { version = "^0.1.0", path = "../lib/protobuf" }
+rustyline = { version = "^11.0.0", features = ["derive"] }
+shared = { version = "^0.1.0", path = "../lib/shared" }
+tokio = { version = "^1.25.0", features = ["rt-multi-thread", "macros"] }
+tonic = "^0.8.3"
+unicode-width = "^0.1.10"

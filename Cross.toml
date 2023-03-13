@@ -1,2 +1,2 @@
 [target.aarch64-unknown-linux-gnu]
-pre-build = ["curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v3.20.3/protoc-3.20.3-linux-aarch_64.zip", "unzip protoc-3.20.3-linux-aarch_64.zip -d $HOME/.local", "export PATH=\"$PATH:$HOME/.local/bin\""]
+pre-build = ["curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v3.20.3/protoc-3.20.3-linux-aarch_64.zip", "unzip protoc-3.20.3-linux-aarch_64.zip -d $HOME/.local", "export PATH=\"$PATH:$HOME/.local/bin\"", "export PROTOC=\"$HOME/.local/bin\""]

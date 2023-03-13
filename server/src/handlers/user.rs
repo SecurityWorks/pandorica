@@ -38,6 +38,10 @@ impl user_service_server::UserService for UserService {
         let sessions = repos::session::read_all_by_user_id(user.get_id().full_identifier()).await?;
         let mut parsed_sessions: Vec<pandorica_common::Session> = Vec::new();
         for session in sessions {
+            if !session.verify() {
+                continue;
+            }
+
             parsed_sessions.push(session.into());
         }
 

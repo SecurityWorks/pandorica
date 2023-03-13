@@ -59,8 +59,8 @@ impl From<User<'_>> for pandorica_common::User {
             email: value
                 .email
                 .map(|e| e.value().unwrap().as_sensitive_str().into()),
-            added_on: value.added_on.timestamp_nanos(),
-            last_seen_on: value.last_seen_on.timestamp_nanos(),
+            added_on: value.added_on.timestamp_micros(),
+            last_seen_on: value.last_seen_on.timestamp_micros(),
             is_active: value.is_active,
         }
     }
