@@ -8,30 +8,33 @@ rust-version = "1.67"
 name = "pandorica"
 path = "src/main.rs"
 
+[target.aarch64-unknown-linux-gnu]
+pre-build = ["dpkg --add-architecture arm64 && apt-get update && apt-get install --assume-yes protobuf-compiler"]
+
 [dependencies]
-tokio = { version="^1.25.0", features=["rt-multi-thread", "macros"] }
+anyhow = "^1.0.69"
+async-trait = "^0.1.66"
+chrono = "^0.4.23"
+clokwerk = "^0.4.0"
+config = "^0.13.3"
+crypto = { version = "^0.1.0", path = "../lib/crypto" }
+foreign = { version = "^0.1.0", path = "../lib/foreign" }
+identifier = { version = "^0.1.0", path = "../lib/identifier" }
+object_store = "^0.5.4"
+once_cell = "^1.17.1"
+protobuf = { version = "^0.1.0", path = "../lib/protobuf" }
+regex = "^1.7.1"
+secret-vault-value = "^0.3.7"
+serde = { version = "^1.0.152", features = ["derive"] }
+serde-binary = "^0.5.0"
+shared = { version = "^0.1.0", path = "../lib/shared" }
+singleton = { version = "^0.1.0", path = "../lib/singleton" }
+surrealdb = { git = "https://github.com/surrealdb/surrealdb" }
+tokio = { version = "^1.25.0", features = ["rt-multi-thread", "macros"] }
+toml = "^0.7.2"
 tonic = "^0.8.3"
 tonic-reflection = "^0.6.0"
 tonic-web = "^0.5.0"
-surrealdb = { git="https://github.com/surrealdb/surrealdb" }
-serde = { version="^1.0.152", features=["derive"] }
-serde-binary = "^0.5.0"
-foreign = { version = "^0.1.0", path = "../lib/foreign" }
-validator = "^0.16.0"
-regex = "^1.7.1"
 tracing = "^0.1.37"
-tracing-subscriber = { version="^0.3.16", features=["env-filter"] }
-object_store = "^0.5.4"
-chrono = "^0.4.23"
-clokwerk = "^0.4.0"
-anyhow = "^1.0.69"
-once_cell = "^1.17.1"
-async-trait = "^0.1.66"
-secret-vault-value = "^0.3.7"
-config = "^0.13.3"
-toml = "^0.7.2"
-singleton = { version = "^0.1.0", path = "../lib/singleton" }
-shared = { version = "^0.1.0", path = "../lib/shared" }
-identifier = { version = "^0.1.0", path = "../lib/identifier" }
-crypto = { version = "^0.1.0", path = "../lib/crypto" }
-protobuf = { version = "^0.1.0", path = "../lib/protobuf" }
+tracing-subscriber = { version = "^0.3.16", features = ["env-filter"] }
+validator = "^0.16.0"

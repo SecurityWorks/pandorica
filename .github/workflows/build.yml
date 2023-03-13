@@ -35,11 +35,13 @@ jobs:
             bin: pandorica.exe
             name: pandorica-windows-x86_64.zip
 
-          - release_for: windows-aarch64
-            os: windows-latest
-            target: aarch64-pc-windows-msvc
-            bin: pandorica.exe
-            name: pandorica-windows-aarch64.zip
+#          Ring 0.16.x currently doesn't support compiling for windows-aarch64.
+#          See https://github.com/briansmith/ring/issues/1167
+#          - release_for: windows-aarch64
+#            os: windows-latest
+#            target: aarch64-pc-windows-msvc
+#            bin: pandorica.exe
+#            name: pandorica-windows-aarch64.zip
 
           - release_for: macos-x86_64
             os: macos-latest

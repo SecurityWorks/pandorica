@@ -1,6 +1,8 @@
+pub use email::email;
 pub use password::password;
-pub use user::user;
-pub use user::user_duplicate;
+pub use username::username_duplicate;
+pub use username::username_format;
 
+mod email;
 mod password;
-mod user;
+mod username;

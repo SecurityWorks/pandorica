@@ -1,3 +1,4 @@
+use crypto::hsm::HsmSettings;
 use serde::{Deserialize, Serialize};
 use singleton::{Singleton, SingletonInit};
 use std::borrow::Cow;
@@ -10,9 +11,8 @@ pub struct Settings {
     pub log_level: Cow<'static, str>,
     pub listen_addr: Cow<'static, str>,
     pub db: DatabaseSettings,
-    pub crypto: CryptoSettings,
+    pub hsm: HsmSettings,
     pub fs: FilesystemSettings,
-    pub gcp: Option<GoogleCloudPlatformSettings>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -24,21 +24,8 @@ pub struct DatabaseSettings {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct CryptoSettings {
-    pub hsm_provider: Cow<'static, str>,
-}
-
-#[derive(Serialize, Deserialize)]
 pub struct FilesystemSettings {
     pub provider: Cow<'static, str>,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct GoogleCloudPlatformSettings {
-    pub project_id: Cow<'static, str>,
-    pub location: Cow<'static, str>,
-    pub key_ring: Cow<'static, str>,
-    pub key: Cow<'static, str>,
 }
 
 impl SingletonInit<Settings> for Settings {
@@ -90,13 +77,10 @@ impl Default for Settings {
                 user: "root".into(),
                 pass: "root".into(),
             },
-            crypto: CryptoSettings {
-                hsm_provider: "gcp".into(),
-            },
+            hsm: HsmSettings::default(),
             fs: FilesystemSettings {
                 provider: "memory".into(),
             },
-            gcp: None,
         }
     }
 }

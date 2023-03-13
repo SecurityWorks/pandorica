@@ -1,5 +1,4 @@
 use shared::error::{EmptyResult, OperationResult};
-use surrealdb::opt::PatchOp;
 
 use crate::models::auth::Password;
 use crate::DB;
@@ -15,15 +14,41 @@ pub async fn read(id: &str) -> OperationResult<Option<Password>> {
     Ok(password)
 }
 
+pub async fn read_active_by_user_id(user_id: &str) -> OperationResult<Option<Password>> {
+    let password: Option<Password> = DB
+        .query(
+            r#"
+        SELECT *
+        FROM password
+        WHERE user_id = $user_id
+        AND is_active = true
+    "#,
+        )
+        .bind(("user_id", user_id))
+        .await?
+        .take(0)?;
+
+    Ok(password)
+}
+
 #[allow(dead_code)]
 pub async fn update(password: &Password<'_>) -> EmptyResult {
     if password.get_id().is_none() {
         return Err(anyhow::format_err!("Password ID is required").into());
     }
 
-    DB.update(("password", password.get_id().partial_identifier()))
-        .patch(PatchOp::replace("/is_active", password.is_active))
-        .await?;
+    DB.query(
+        r#"
+        UPDATE password
+        SET user_id = $user_id,
+            is_active = $is_active
+        WHERE id = $id
+    "#,
+    )
+    .bind(("user_id", &password.user_id))
+    .bind(("is_active", password.is_active))
+    .bind(("id", password.get_id().full_identifier()))
+    .await?;
 
     Ok(())
 }

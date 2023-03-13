@@ -1,4 +1,6 @@
 .idea/
 target/
+docker/
 config.toml
+config.toml.old
 gcp-creds.json

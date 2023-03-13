@@ -1,0 +1,18 @@
+version: '3.3'
+services:
+  surrealdb:
+    ports:
+      - '8000:8000'
+    volumes:
+      - './docker/surrealdb:/db'
+    image: 'surrealdb/surrealdb:nightly'
+    command: 'start --log trace --user root --pass root file://db'
+
+  minio:
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    volumes:
+      - './docker/minio:/data'
+    image: 'minio/minio:latest'
+    command: 'server /data --console-address ":9001"'

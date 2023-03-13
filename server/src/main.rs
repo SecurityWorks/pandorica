@@ -1,8 +1,10 @@
 #![forbid(unsafe_code)]
 
 use crate::config::Settings;
+use ::crypto::hsm::HsmProvider;
 use ::shared::error::EmptyResult;
 use protobuf::pandorica_auth::auth_service_server::AuthServiceServer;
+use protobuf::pandorica_user::user_service_server::UserServiceServer;
 use protobuf::FILE_DESCRIPTOR_SET;
 use singleton::{sync::Singleton, unsync::Singleton as UnsyncSingleton};
 use std::net::SocketAddr;
@@ -12,13 +14,15 @@ use surrealdb::Surreal;
 use tonic::transport::Server;
 use tracing_subscriber::fmt::format::FmtSpan;
 
-use crate::crypto::KeyProvider;
 use crate::handlers::auth::AuthService;
+use crate::handlers::user::UserService;
+use crate::kms::KeyManagementSystem;
 
 mod config;
-mod crypto;
 mod fs;
 mod handlers;
+mod helpers;
+mod kms;
 mod models;
 mod repos;
 mod validators;
@@ -73,18 +77,18 @@ async fn main() -> EmptyResult {
         );
     }
 
-    // Initialize the key provider
     {
-        let mut guard = KeyProvider::lock().await;
-
-        guard
-            .init_cloud()
-            .await
-            .unwrap_or_else(|e| panic!("Error initializing key provider: {:?}", e));
+        let mut hsm = HsmProvider::lock().await;
+        hsm.init_provider(&Settings::get().hsm).await?;
+    }
+    {
+        let mut kms = KeyManagementSystem::lock().await;
+        kms.init_kms().await?;
     }
 
     // Setup the services
     let auth_service = AuthService::default();
+    let user_service = UserService::default();
 
     // Setup reflection
     let reflection_service = tonic_reflection::server::Builder::configure()
@@ -101,6 +105,7 @@ async fn main() -> EmptyResult {
     Server::builder()
         .add_service(reflection_service)
         .add_service(AuthServiceServer::new(auth_service))
+        .add_service(UserServiceServer::new(user_service))
         .serve(addr)
         .await?;
 

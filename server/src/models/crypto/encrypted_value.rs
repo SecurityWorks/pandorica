@@ -1,14 +1,12 @@
 use std::borrow::Cow;
 
-use crypto::encryption::ChaCha20Poly1305;
-use crypto::traits::EncryptionProvider;
+use crate::kms::KeyManagementSystem;
+use crate::models::crypto::Dek;
+use crypto::chacha20poly1305::ChaCha20Poly1305;
 use secret_vault_value::SecretValue;
 use serde::{Deserialize, Serialize};
 use shared::error::{EmptyResult, OperationResult};
 use singleton::sync::Singleton;
-
-use crate::crypto::KeyProvider;
-use crate::models::crypto::Dek;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct EncryptedValue<'a> {
@@ -26,8 +24,8 @@ impl<'a> EncryptedValue<'a> {
     pub async fn new(value: SecretValue) -> OperationResult<EncryptedValue<'a>> {
         let dek: Dek;
         {
-            let guard = KeyProvider::lock().await;
-            dek = guard.generate_dek().await?;
+            let kms = KeyManagementSystem::lock().await;
+            dek = kms.generate_dek().await?;
         }
 
         let encrypted_value = ChaCha20Poly1305::encrypt(&value, &dek.decoded_key, &dek.nonce)?;
@@ -44,8 +42,8 @@ impl<'a> EncryptedValue<'a> {
     pub async fn decrypt(&mut self) -> EmptyResult {
         self.decoded_dek = Dek::from_bytes(&self.dek)?;
         {
-            let guard = KeyProvider::lock().await;
-            guard.decrypt_dek(&mut self.decoded_dek).await?;
+            let kms = KeyManagementSystem::lock().await;
+            kms.decrypt_dek(&mut self.decoded_dek).await?;
         }
 
         self.decoded_value = ChaCha20Poly1305::decrypt(

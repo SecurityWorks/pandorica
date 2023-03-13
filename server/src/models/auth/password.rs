@@ -1,8 +1,7 @@
 use std::borrow::Cow;
 
 use chrono::{DateTime, Utc};
-use crypto::hashing::Argon2id;
-use crypto::traits::HashingProvider;
+use crypto::argon2id::Argon2id;
 use foreign::IntoKey;
 use identifier::Identifier;
 use secret_vault_value::SecretValue;
@@ -13,6 +12,7 @@ use shared::error::OperationResult;
 pub struct Password<'a> {
     #[serde(skip_serializing_if = "Identifier::is_none")]
     id: Identifier,
+    pub user_id: Cow<'a, str>,
     #[serde(skip)]
     pub plaintext: Option<SecretValue>,
     pub hash: Cow<'a, [u8]>,
@@ -27,11 +27,12 @@ impl<'a> IntoKey for Password<'a> {
 }
 
 impl<'a> Password<'a> {
-    pub fn new(plaintext: SecretValue) -> OperationResult<Self> {
-        let hash = Argon2id::generate_hash_ns(&plaintext)?;
+    pub fn new(plaintext: SecretValue, user_id: String) -> OperationResult<Self> {
+        let hash = Argon2id::generate_hash(&plaintext)?;
 
         Ok(Password {
             id: Identifier::default(),
+            user_id: user_id.into(),
             plaintext: Some(plaintext),
             hash: hash.into(),
             added_on: Utc::now(),
@@ -43,10 +44,7 @@ impl<'a> Password<'a> {
         &self.id
     }
 
-    pub fn verify(&self, other: &Password<'_>) -> OperationResult<bool> {
-        self.plaintext
-            .as_ref()
-            .unwrap()
-            .exposed_in_as_zvec(|p| Argon2id::verify_hash(p.as_slice(), &other.hash))
+    pub fn verify(&self, hashed: &Password<'_>) -> OperationResult<bool> {
+        Argon2id::verify_hash(self.plaintext.as_ref().unwrap(), &hashed.hash)
     }
 }

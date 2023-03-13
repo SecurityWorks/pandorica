@@ -1,41 +1,25 @@
 use crate::config::Settings;
+use crate::models::crypto::{Dek, Mk};
+use crate::repos;
 use chrono::Utc;
-use crypto::encryption::chacha20poly1305::ChaCha20Poly1305;
-use crypto::traits::{CloudProvider, EncryptionProvider};
+use crypto::chacha20poly1305::ChaCha20Poly1305;
+use crypto::hsm::HsmProvider;
 use secret_vault_value::SecretValue;
 use shared::error::{EmptyResult, OperationResult};
 use singleton::{unsync::Singleton as UnsyncSingleton, OnceCell, Singleton, SingletonInit};
 use std::borrow::Cow;
-
-use crate::models::crypto::{Dek, Mk};
-use crate::repos;
 
 const ENCRYPTION_KEY_SIZE: u32 = 32;
 const ENCRYPTION_NONCE_SIZE: u32 = 24;
 
 #[derive(Default, Singleton)]
 #[singleton(use_once_cell = false)]
-pub struct KeyProvider {
-    hsm: OnceCell<Box<dyn CloudProvider>>,
+pub struct KeyManagementSystem {
     current_master_key: Cow<'static, Mk<'static>>,
 }
 
-impl KeyProvider {
-    pub async fn init_cloud(&mut self) -> EmptyResult {
-        if Settings::get().crypto.hsm_provider == "gcp" {
-            self.hsm =
-                OnceCell::from(Box::<crypto::hsm::gcp::Gcp>::default() as Box<dyn CloudProvider>);
-        }
-
-        self.hsm
-            .get_mut()
-            .unwrap()
-            .init(
-                &Settings::get().gcp.as_ref().unwrap().project_id,
-                &Settings::get().gcp.as_ref().unwrap().location,
-                &Settings::get().gcp.as_ref().unwrap().key_ring,
-            )
-            .await?;
+impl KeyManagementSystem {
+    pub async fn init_kms(&mut self) -> EmptyResult {
         self.rotate().await
     }
 
@@ -60,14 +44,12 @@ impl KeyProvider {
         }
 
         let key_material =
-            SecretValue::from(self.hsm.get().unwrap().generate_random_bytes(32).await?);
-        let wrapped_key_material = self
-            .hsm
-            .get()
-            .unwrap()
+            SecretValue::from(HsmProvider::lock().await.generate_random_bytes(32).await?);
+        let wrapped_key_material = HsmProvider::lock()
+            .await
             .encrypt_envelope(
                 key_material.clone(),
-                Settings::get().gcp.as_ref().unwrap().key.as_ref(),
+                Settings::get().hsm.gcp.as_ref().unwrap().key.as_ref(),
             )
             .await?;
 
@@ -84,22 +66,17 @@ impl KeyProvider {
 
     pub async fn generate_dek<'a>(&self) -> OperationResult<Dek<'a>> {
         let key = SecretValue::from(
-            self.hsm
-                .get()
-                .unwrap()
+            HsmProvider::lock()
+                .await
                 .generate_random_bytes(ENCRYPTION_KEY_SIZE)
                 .await?,
         );
-        let nonce = self
-            .hsm
-            .get()
-            .unwrap()
+        let nonce = HsmProvider::lock()
+            .await
             .generate_random_bytes(ENCRYPTION_NONCE_SIZE)
             .await?;
-        let wrapping_nonce = self
-            .hsm
-            .get()
-            .unwrap()
+        let wrapping_nonce = HsmProvider::lock()
+            .await
             .generate_random_bytes(ENCRYPTION_NONCE_SIZE)
             .await?;
         let wrapped_key_material = ChaCha20Poly1305::encrypt(
@@ -111,7 +88,7 @@ impl KeyProvider {
         Ok(Dek::new(
             key,
             nonce,
-            String::from(self.current_master_key.get_id().partial_identifier()),
+            self.current_master_key.get_id().as_string(),
             wrapping_nonce,
             wrapped_key_material,
         ))
@@ -119,7 +96,7 @@ impl KeyProvider {
 
     pub async fn decrypt_dek(&self, dek: &'_ mut Dek<'_>) -> EmptyResult {
         let master_key = self
-            .load_master_key(Some(dek.master_key_id.as_ref()))
+            .load_master_key(Some(dek.master_key_id.as_ref().split(':').last().unwrap()))
             .await?;
 
         let key = ChaCha20Poly1305::decrypt(
@@ -150,13 +127,11 @@ impl KeyProvider {
     }
 
     async fn decrypt_master_key<'a>(&self, master_key: &mut Mk<'a>) -> EmptyResult {
-        let decrypted_key = self
-            .hsm
-            .get()
-            .unwrap()
+        let decrypted_key = HsmProvider::lock()
+            .await
             .decrypt_envelope(
                 &master_key.key,
-                Settings::get().gcp.as_ref().unwrap().key.as_ref(),
+                Settings::get().hsm.gcp.as_ref().unwrap().key.as_ref(),
             )
             .await?;
 
@@ -166,8 +141,8 @@ impl KeyProvider {
     }
 }
 
-impl SingletonInit<KeyProvider> for KeyProvider {
-    fn init() -> KeyProvider {
-        KeyProvider::default()
+impl SingletonInit<KeyManagementSystem> for KeyManagementSystem {
+    fn init() -> KeyManagementSystem {
+        KeyManagementSystem::default()
     }
 }
